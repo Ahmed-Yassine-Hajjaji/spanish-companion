@@ -11,8 +11,11 @@ then open http://localhost:7860 and press Connect.
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from loguru import logger
 from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.frames.frames import LLMMessagesAppendFrame, TTSUpdateSettingsFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.worker import PipelineParams, PipelineWorker
@@ -28,7 +31,7 @@ from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
 from pipecat.workers.runner import WorkerRunner
 
-from companion import models
+from companion import models, transcripts
 from companion.config import VOICES, Settings
 from companion.prompts import GREETING, PERSONA
 from companion.services.stt import ParakeetSTTService
@@ -39,9 +42,22 @@ TRANSPORT_PARAMS = {
 }
 
 
+class LocalLLMService(OpenAILLMService):
+    """OpenAI-compatible client for llama.cpp.
+
+    Pipecat sometimes adds "developer" notes in the middle of a conversation (for
+    example after an interruption with no words heard). Qwen's chat template only
+    accepts a system message at the very start and fails with HTTP 500 otherwise,
+    which broke every later turn of the call. Sending those notes as user messages
+    avoids that.
+    """
+
+    supports_developer_role = False
+
+
 def build_llm(settings: Settings) -> OpenAILLMService:
     """The language model client, talking to the local llama.cpp server."""
-    return OpenAILLMService(
+    return LocalLLMService(
         base_url=settings.llm_url,
         api_key="not-needed",
         settings=OpenAILLMService.Settings(
@@ -56,7 +72,8 @@ def build_llm(settings: Settings) -> OpenAILLMService:
 
 
 async def switch_voice(params: FunctionCallParams, voice: str):
-    """Switch the companion's speaking voice.
+    """Switch the companion's speaking voice. Only call this when the user clearly
+    asks for a different voice by name or says they want another voice.
 
     Args:
         voice: The voice to use, either "eve" or "alba".
@@ -84,7 +101,9 @@ async def run_call(transport: BaseTransport, settings: Settings, handle_sigint: 
     context = new_context()
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,
-        user_params=LLMUserAggregatorParams(vad_analyzer=SileroVADAnalyzer()),
+        user_params=LLMUserAggregatorParams(
+            vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=settings.pause_secs))
+        ),
     )
 
     pipeline = Pipeline(
@@ -103,8 +122,12 @@ async def run_call(transport: BaseTransport, settings: Settings, handle_sigint: 
         params=PipelineParams(enable_metrics=True, enable_usage_metrics=True),
     )
 
+    started = datetime.now()
+
     @transport.event_handler("on_client_connected")
     async def on_client_connected(transport, client):
+        nonlocal started
+        started = datetime.now()
         logger.info("Call started")
         await worker.queue_frames(
             [LLMMessagesAppendFrame(messages=[{"role": "user", "content": GREETING}], run_llm=True)]
@@ -113,6 +136,14 @@ async def run_call(transport: BaseTransport, settings: Settings, handle_sigint: 
     @transport.event_handler("on_client_disconnected")
     async def on_client_disconnected(transport, client):
         logger.info("Call ended")
+        try:
+            path = transcripts.save_call(
+                context.get_messages(), settings.calls_dir, started=started, skip=[GREETING]
+            )
+            if path:
+                logger.info(f"Saved the conversation to {path}")
+        except OSError as e:
+            logger.warning(f"Could not save the conversation: {e}")
         await worker.cancel()
 
     runner = WorkerRunner(handle_sigint=handle_sigint)

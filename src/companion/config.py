@@ -24,9 +24,19 @@ class Settings:
     )
     # Voice used when a call starts.
     voice: str = field(default_factory=lambda: os.getenv("COMPANION_VOICE", "eve"))
+    # Seconds of silence before a pause counts as "maybe done talking". Longer gives
+    # you time to think mid-sentence; shorter makes replies come sooner.
+    pause_secs: float = field(
+        default_factory=lambda: float(os.getenv("COMPANION_PAUSE_SECS", "0.8"))
+    )
     # Speech recognition model (onnx-asr name).
     stt_model: str = field(
         default_factory=lambda: os.getenv("COMPANION_STT_MODEL", "nemo-parakeet-tdt-0.6b-v3")
+    )
+
+    # Where call transcripts are saved (one JSON file per call), for review later.
+    calls_dir: str = field(
+        default_factory=lambda: os.getenv("COMPANION_CALLS_DIR", os.path.join("data", "calls"))
     )
 
     def __post_init__(self) -> None:

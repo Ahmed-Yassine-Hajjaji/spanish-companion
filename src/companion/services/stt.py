@@ -14,6 +14,7 @@ from typing import Any
 import numpy as np
 from loguru import logger
 from pipecat.frames.frames import Frame, TranscriptionFrame
+from pipecat.services.settings import STTSettings
 from pipecat.services.stt_service import SegmentedSTTService
 from pipecat.utils.time import time_now_iso8601
 
@@ -33,6 +34,8 @@ class ParakeetSTTService(SegmentedSTTService):
         return SAMPLE_RATE
 
     def __init__(self, *, model: Any, **kwargs):
+        # Parakeet picks the language itself, and the model is passed in already loaded.
+        kwargs.setdefault("settings", STTSettings(model=None, language=None))
         super().__init__(**kwargs)
         self._model = model
 

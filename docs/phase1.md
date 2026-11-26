@@ -45,8 +45,14 @@ uv pip install -e ".[call,dev]"
 
 ## Things to try
 
+Sol follows your lead: it chats about what you bring up and does not quiz you
+unless you ask it to.
+
 - Just chat. Interrupt it mid-sentence: it should stop and listen.
-- "How do I say thank you in Spanish?", then try saying it back.
+- Rehearse: "I have a presentation about daily life in Alicante. I'll say my phrases
+  one by one, correct me if I'm wrong." Then say each phrase. Sol says whether it's
+  right, or gives the fix in one sentence, and waits for the next one.
+- "What does *la vida diaria* mean?" or "How do I say thank you in Spanish?"
 - "Can you switch to Alba?" changes the voice for the rest of the call.
 - Start with Alba: `$env:COMPANION_VOICE = "alba"` before step 2.
 
@@ -57,12 +63,17 @@ uv pip install -e ".[call,dev]"
 | `COMPANION_VOICE` | `eve` | Voice at the start of a call (`eve` or `alba`) |
 | `COMPANION_LLM_URL` | `http://127.0.0.1:8080/v1` | llama.cpp server address (an IP, because `localhost` can stall on IPv6 on Windows) |
 | `COMPANION_LLM_MAX_TOKENS` | `160` | Longest reply, in tokens |
+| `COMPANION_PAUSE_SECS` | `0.8` | Silence before a pause may end your turn. Raise it (for example `1.2`) if Sol jumps in while you think |
+| `COMPANION_CALLS_DIR` | `data\calls` | Where each call's conversation is saved |
 | `COMPANION_STT_MODEL` | `nemo-parakeet-tdt-0.6b-v3` | Speech recognition model |
 
 ## Known limits of phase 1
 
 - The transcript on the call page shows the `<es>` tags around Spanish words.
-- No memory between calls, no checked corrections yet (phase 2 and 3).
+- Each call's conversation is saved to `data\calls\<date>.json` on your PC, but the
+  companion does not read it back yet: memory and mistake review come in phases 2 and 3.
+- Speech recognition sometimes mishears Spanish from a beginner (for example "diaria"
+  as "diarrhea"). Sol is told to guess the likely word from context.
 - Interruption can be triggered by loud background noise; a headset helps.
 
 ## Done when
