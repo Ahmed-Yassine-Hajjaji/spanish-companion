@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spanish-companion"
+version = "0.1.0"
+description = "A fully local, live voice-call companion for learning Spanish."
+readme = "README.md"
+license = "MIT"
+# Kokoro (the voice) does not support Python 3.13 yet, so 3.12 is the target.
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy>=1.26",
+    "soundfile>=0.12",
+]
+
+[project.optional-dependencies]
+# Microphone recording for the phase 0 test sentences.
+audio = ["sounddevice>=0.5"]
+# Language model benchmark (talks to a local llama.cpp server).
+llm = ["openai>=1.50"]
+# Speech recognition candidates.
+stt = ["onnx-asr[cpu,hub]>=0.12", "faster-whisper>=1.2"]
+# Voice.
+tts = ["kokoro>=0.9.4"]
+phase0 = ["spanish-companion[audio,llm,stt,tts]"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/companion"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
