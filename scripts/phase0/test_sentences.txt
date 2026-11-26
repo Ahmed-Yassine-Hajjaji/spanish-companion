@@ -1,0 +1,22 @@
+# One sentence per line. Mix English and Spanish the way you really would.
+# Lines starting with # are ignored. Edit freely; then record with record_samples.py.
+Hola, me llamo Alex.
+Hello, how do you say good morning in Spanish?
+Buenos días, ¿cómo estás?
+I want un café con leche, please.
+Yo quiero una cerveza.
+Yo tener un perro.
+How do you say "I am tired"? Estoy cansado.
+Mi casa es grande y bonita.
+I don't know how to say that, eh, no sé.
+¿Dónde está el baño?
+La cuenta, por favor.
+I think it's el mesa or la mesa?
+Me gusta mucho la música.
+Can you repeat that more slowly please?
+Tengo veinte años.
+Je ne sais pas, how do you say "je ne sais pas" in Spanish?
+Hoy hace mucho calor.
+What's the difference between ser and estar?
+Mañana voy a la escuela.
+Gracias, hasta luego.
