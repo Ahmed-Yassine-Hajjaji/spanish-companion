@@ -27,6 +27,20 @@ uv venv --python 3.12
 uv pip install -e ".[phase0,dev]"
 ```
 
+For the GPU tests (Whisper on CUDA, `bench_tts.py --device cuda`), swap in the CUDA build
+of PyTorch and NVIDIA's libraries:
+
+```powershell
+uv pip install torch --index-url https://download.pytorch.org/whl/cu128
+uv pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
+```
+
+Whisper on Windows also needs those libraries' DLL folders on `PATH`
+(`.venv\Lib\site-packages\nvidia\*\bin`).
+
+If PowerShell refuses to run `activate`, call `.venv\Scripts\python.exe` directly, or allow
+local scripts once with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
 The first runs download models from Hugging Face (Parakeet about 2.5 GB, Whisper turbo
 about 1.6 GB, Kokoro about 330 MB). They are cached, and nothing is uploaded.
 
@@ -38,6 +52,7 @@ python scripts/phase0/record_samples.py   # record the 20 test sentences (about 
 python scripts/phase0/bench_stt.py        # Parakeet vs Whisper on your voice
 python scripts/phase0/bench_tts.py        # Kokoro, English + Spanish voices, on the CPU
 python scripts/phase0/bench_tts.py --device cuda
+python scripts/phase0/bench_tts.py --device cuda --voice ef_dora   # compare voices
 ```
 
 For the language model, download a **text-only** Qwen 3.5 9B GGUF at `Q4_K_M` (search
@@ -61,7 +76,7 @@ python scripts/phase0/bench_llm.py
 | --- | --- | --- |
 | Language model | first sentence under 0.8 s, 35+ tokens/s | check it is fully on the GPU (`-ngl 99`) and not thinking |
 | Speech recognition | under 0.4 s per sentence, few errors on your Spanish | compare engines; try `--no-prompt` and `--whisper-device cpu` |
-| Voice | first audio under 0.2 s, Spanish sounds right | try `--es-voice em_alex`, or `--device cuda` |
+| Voice | first audio under 0.2 s, Spanish sounds right | try another `--voice`, or `--device cuda` |
 | VRAM | about 1 GB free with the model loaded | shorter context (`-c 4096`), close other GPU apps |
 
 Paste the summary lines from each script (and anything that failed) back into the

@@ -1,15 +1,17 @@
 """Phase 0, step 5: can the voice speak English and Spanish fast enough?
 
-Uses Kokoro 82M with two voices that share one loaded model: an English voice for
-normal text and a Spanish voice for <es>...</es> parts. Measures time to first audio
-and real-time factor, and saves each line as a WAV in output/ so you can listen to
-the Spanish pronunciation.
+Uses Kokoro 82M with ONE voice for both languages, so the companion always sounds like
+the same person. Pronunciation comes from the language pipeline, not the voice: normal
+text goes through the English pipeline and <es>...</es> parts through the Spanish one.
+Measures time to first audio and real-time factor, and saves each line as a WAV in
+output/ so you can listen to the Spanish pronunciation.
 
 Needs espeak-ng installed (Kokoro uses it for Spanish). See docs/phase0.md.
 
 Usage:
   python scripts/phase0/bench_tts.py                 # on the CPU (the plan)
   python scripts/phase0/bench_tts.py --device cuda   # to compare
+  python scripts/phase0/bench_tts.py --voice ef_dora # a Spanish-native voice for both
 """
 
 from __future__ import annotations
@@ -41,8 +43,12 @@ LANG_CODES = {"en": "a", "es": "e"}  # Kokoro: a = American English, e = Spanish
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
-    parser.add_argument("--en-voice", default="af_heart")
-    parser.add_argument("--es-voice", default="ef_dora", help="Also try em_alex")
+    parser.add_argument(
+        "--voice", default="af_heart", help="Voice for both languages (try ef_dora, af_bella)"
+    )
+    parser.add_argument(
+        "--es-voice", default=None, help="Optional different voice for Spanish parts"
+    )
     parser.add_argument("--out", type=Path, default=Path("output"))
     args = parser.parse_args()
 
@@ -55,7 +61,7 @@ def main() -> int:
         lang: KPipeline(lang_code=code, repo_id="hexgrad/Kokoro-82M", model=model)
         for lang, code in LANG_CODES.items()
     }
-    voices = {"en": args.en_voice, "es": args.es_voice}
+    voices = {"en": args.voice, "es": args.es_voice or args.voice}
     print(f"Loaded on {args.device} in {time.perf_counter() - t0:.1f} s")
     if args.device == "cuda" and None not in (vram_before, gpu_used_mib()):
         print(f"VRAM used by the voice: {gpu_used_mib() - vram_before:,} MiB")
