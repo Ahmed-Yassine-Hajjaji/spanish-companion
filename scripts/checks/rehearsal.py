@@ -17,6 +17,7 @@ import urllib.request
 from pipecat.turns.user_turn_completion import USER_TURN_COMPLETION_INSTRUCTIONS
 
 from companion.prompts import PERSONA
+from companion.text import TURN_MARKERS, remove_turn_markers
 
 PREFIX = [
     {"role": "assistant", "content": "● Hi! <es>Hola</es>. What would you like to do today?"},
@@ -28,7 +29,7 @@ PREFIX = [
     {"role": "assistant", "content": "● Sure, go ahead."},
 ]
 
-# (what the user said, what a good reply starts with)
+# (what the user said, what a good reply starts with: one option or several)
 CASES = [
     ("En Alicante, la playa está en el centro de la", "◐"),
     ("En Alicante, la playa está en el centro de la ciudad.", "● Correct."),
@@ -37,6 +38,7 @@ CASES = [
     ("Se llama la playa del Postiguet.", "● Correct."),
     ("Yo soy estudiante y me gusta mucho los churros.", "● Almost:"),
     ("Otto Milesol.", "● Sorry"),
+    ("Si ama la playa del postighet.", ("● Sorry", "● Correct.")),
 ]
 
 
@@ -63,6 +65,14 @@ def ask(url: str, text: str) -> tuple[str, str]:
     return choice["message"]["content"], choice["finish_reason"]
 
 
+def normalize(reply: str) -> str:
+    """Count a doubled marker ("● ● Correct.") as one, as the call pipeline does."""
+    reply = reply.strip()
+    marker = reply[:1] if reply[:1] in TURN_MARKERS else ""
+    rest = remove_turn_markers(reply)
+    return f"{marker} {rest}".strip()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", default="http://127.0.0.1:8080/v1")
@@ -74,7 +84,7 @@ def main() -> None:
         print(f"\n> {text}   (want: {expected})")
         for _ in range(args.runs):
             reply, finish = ask(args.url, text)
-            ok = reply.strip().startswith(expected) and finish == "stop"
+            ok = normalize(reply).startswith(expected) and finish == "stop"
             passed += ok
             total += 1
             print(f"  {'PASS' if ok else 'FAIL'}  {reply!r}  [{finish}]")

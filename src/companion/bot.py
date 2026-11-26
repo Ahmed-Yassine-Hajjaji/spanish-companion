@@ -2,7 +2,7 @@
 
 Pipeline, in order:
   browser mic -> voice detection + Smart Turn -> Parakeet (CPU) -> Qwen 3.5 9B
-  (llama.cpp, GPU) -> Pocket TTS (CPU) -> browser speaker
+  (llama.cpp, GPU) -> verdict guard -> Pocket TTS (CPU) -> browser speaker
 
 Run it (with llama-server already running, see docs/phase1.md):
     python -m companion.bot
@@ -36,6 +36,7 @@ from pipecat.workers.runner import WorkerRunner
 from companion import models, transcripts
 from companion.config import VOICES, Settings
 from companion.prompts import GREETING, NUDGE_LONG, NUDGE_SHORT, PERSONA
+from companion.services.guard import CorrectVerdictGuard
 from companion.services.stt import ParakeetSTTService
 from companion.services.tts import BilingualPocketTTSService
 
@@ -120,7 +121,9 @@ def new_context() -> LLMContext:
 
 
 async def run_call(transport: BaseTransport, settings: Settings, handle_sigint: bool) -> None:
-    stt = ParakeetSTTService(model=models.parakeet(settings.stt_model))
+    stt = ParakeetSTTService(
+        model=models.parakeet(settings.stt_model), ttfs_p99_latency=settings.pause_secs + 1.2
+    )
     llm = build_llm(settings)
     tts = BilingualPocketTTSService(
         models=models.pocket_models(), states=models.voice_states(), voice=settings.voice
@@ -140,6 +143,7 @@ async def run_call(transport: BaseTransport, settings: Settings, handle_sigint: 
             stt,
             user_aggregator,
             llm,
+            CorrectVerdictGuard(),
             tts,
             transport.output(),
             assistant_aggregator,

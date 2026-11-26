@@ -50,3 +50,19 @@ def test_remove_turn_markers_handles_repeats():
     assert remove_turn_markers("● ● Correct.") == "Correct."
     assert remove_turn_markers("◐") == ""
     assert remove_turn_markers("●Almost: <es>Hola</es>.") == "Almost: <es>Hola</es>."
+
+
+def test_untagged_spanish_questions_and_exclamations_are_spanish():
+    from companion.text import Segment, split_languages
+
+    assert split_languages("¡Hola! I'm great. ¿Cómo estás tú hoy? Tell me.") == [
+        Segment("es", "¡Hola!"),
+        Segment("en", "I'm great."),
+        Segment("es", "¿Cómo estás tú hoy?"),
+        Segment("en", "Tell me."),
+    ]
+    # Inside tags nothing changes.
+    assert split_languages("Say <es>¡Hola!</es>") == [
+        Segment("en", "Say"),
+        Segment("es", "¡Hola!"),
+    ]

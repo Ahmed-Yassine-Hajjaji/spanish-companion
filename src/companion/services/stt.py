@@ -13,7 +13,7 @@ from typing import Any
 
 import numpy as np
 from loguru import logger
-from pipecat.frames.frames import Frame, TranscriptionFrame
+from pipecat.frames.frames import Frame, TranscriptionFinalizedFrame, TranscriptionFrame
 from pipecat.services.settings import STTSettings
 from pipecat.services.stt_service import SegmentedSTTService
 from pipecat.utils.time import time_now_iso8601
@@ -22,7 +22,14 @@ SAMPLE_RATE = 16_000
 
 
 class ParakeetSTTService(SegmentedSTTService):
-    """Transcribes each spoken segment with a shared, preloaded onnx-asr model."""
+    """Transcribes each spoken segment with a shared, preloaded onnx-asr model.
+
+    Each segment gives exactly one final transcript, so every transcript is marked
+    finalized. That tells the turn logic it has everything the user said and must
+    not answer before the last piece arrives. Without it, the turn could end
+    while the second half of a sentence was still being transcribed, and the
+    companion replied twice, first to half the sentence.
+    """
 
     @property
     def wants_wav_segments(self) -> bool:
@@ -33,10 +40,12 @@ class ParakeetSTTService(SegmentedSTTService):
     def segment_sample_rate(self) -> int:
         return SAMPLE_RATE
 
-    def __init__(self, *, model: Any, **kwargs):
+    def __init__(self, *, model: Any, ttfs_p99_latency: float = 2.0, **kwargs):
         # Parakeet picks the language itself, and the model is passed in already loaded.
         kwargs.setdefault("settings", STTSettings(model=None, language=None))
-        super().__init__(**kwargs)
+        # Upper bound for "user stopped talking -> transcript", used only as a
+        # safety net since every transcript is finalized.
+        super().__init__(ttfs_p99_latency=ttfs_p99_latency, **kwargs)
         self._model = model
 
     def can_generate_metrics(self) -> bool:
@@ -50,4 +59,7 @@ class ParakeetSTTService(SegmentedSTTService):
         text = (text or "").strip()
         if text:
             logger.debug(f"Heard: [{text}]")
-            yield TranscriptionFrame(text, self._user_id, time_now_iso8601(), None)
+            yield TranscriptionFrame(text, self._user_id, time_now_iso8601(), None, finalized=True)
+        else:
+            # Nothing recognized (a cough, noise): still close the segment.
+            yield TranscriptionFinalizedFrame(user_id=self._user_id, timestamp=time_now_iso8601())

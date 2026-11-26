@@ -103,3 +103,20 @@ async def test_parakeet_service_emits_transcription():
     stt = ParakeetSTTService(model=FakeAsr())
     frames = [f async for f in stt.run_stt(np.zeros(1600, dtype=np.int16).tobytes())]
     assert [f.text for f in frames if isinstance(f, TranscriptionFrame)] == ["yo tengo un perro"]
+    # One segment = one final transcript, so the turn logic never answers half a sentence.
+    assert all(f.finalized for f in frames if isinstance(f, TranscriptionFrame))
+
+
+async def test_parakeet_service_closes_empty_segments():
+    from pipecat.frames.frames import TranscriptionFinalizedFrame
+
+    from companion.services.stt import ParakeetSTTService
+
+    class SilentAsr:
+        def recognize(self, waveform, sample_rate):
+            return ""
+
+    stt = ParakeetSTTService(model=SilentAsr())
+    frames = [f async for f in stt.run_stt(np.zeros(1600, dtype=np.int16).tobytes())]
+    assert any(isinstance(f, TranscriptionFinalizedFrame) for f in frames)
+    assert not any(isinstance(f, TranscriptionFrame) for f in frames)
