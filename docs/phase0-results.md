@@ -64,7 +64,7 @@ Notable misses:
 - **Voice: Pocket TTS on the CPU.** More natural than Kokoro, streams its first audio in
   0.08 s, and uses no VRAM, so the GPU keeps about 1.7 GB of headroom.
 - **One voice for both languages.** Each language has its own model, but both use the
-  same catalog voice, so English and Spanish are spoken by the same person.
+  same catalog voice ("eve", chosen by ear), so English and Spanish are spoken by the same person.
 - **Language model: Qwen 3.5 9B as planned.** It is faster than the 35 to 45 tokens/s
   estimate.
 

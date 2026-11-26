@@ -10,7 +10,7 @@ Measured on an RTX 4060 PC (Ryzen 7 X3D): first audio 0.08 s and real-time facto
 about 8 s for Qwen3-TTS. See docs/phase0-results.md.
 
 Usage:
-  python scripts/phase0/bench_pocket_tts.py                 # voice "alba", CPU
+  python scripts/phase0/bench_pocket_tts.py                 # voice "eve" (the chosen one), CPU
   python scripts/phase0/bench_pocket_tts.py --voice lola    # a Spanish voice for both
   python scripts/phase0/bench_pocket_tts.py --device cuda
 """
@@ -42,7 +42,7 @@ LANGUAGES = {"en": "english", "es": "spanish"}
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--voice", default="alba", help="Catalog voice, e.g. alba, eve, lola")
+    parser.add_argument("--voice", default="eve", help="Catalog voice, e.g. eve, alba, lola")
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     parser.add_argument("--out", type=Path, default=Path("output"))
     args = parser.parse_args()
