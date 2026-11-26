@@ -24,6 +24,24 @@ No reasoning leaked into replies, `<es>` tags were used correctly, and it correc
 | CPU | 0.40 s (0.38 to 0.57) | 0.24 | none |
 | GPU | 0.09 s (0.05 to 0.11) | 0.06 | 421 MiB |
 
+## More natural voices
+
+Kokoro sounded robotic, so three more voice models were tested with the language model
+loaded, one voice for both languages:
+
+| Model | Runs on | First audio | Real-time factor | VRAM | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| Pocket TTS (Kyutai, ~100M per language) | CPU | 0.08 s (0.07 to 0.09) | 0.26 | none | **Pick**: natural, real streaming |
+| Pocket TTS | GPU | 0.04 s | 0.17 | 842 MiB | Not needed |
+| Kokoro 82M | GPU | 0.09 s | 0.06 | 421 MiB | Fast fallback, robotic |
+| Chatterbox Multilingual | GPU | 1.79 s (1.33 to 3.17) | 0.88 | 3.4 GB | Too slow; pushes the model out of VRAM |
+| Qwen3-TTS 0.6B CustomVoice | GPU | about 8 s | about 2.0 | 1.1 to 2.3 GB | Far too slow without streaming |
+
+Notes: Chatterbox and Qwen3-TTS have no real streaming in their pip packages, and take one
+language per call or need their own environment because of pinned dependencies.
+Chatterbox output is watermarked by design. Pocket TTS custom voice cloning needs
+accepting Kyutai's terms on Hugging Face; the built-in catalog voices do not.
+
 ## Speech recognition (20 mixed English/Spanish/French recordings)
 
 | Engine | Time per sentence | Real-time factor | Median WER (max) | VRAM |
@@ -43,12 +61,12 @@ Notable misses:
 
 - **Speech recognition: Parakeet on the CPU.** It is faster, costs no VRAM and keeps
   what you said instead of translating or normalizing it.
-- **Voice: Kokoro on the GPU.** 421 MiB buys a 4x faster first sound (0.09 s vs 0.40 s).
-  Model plus voice use about 6.7 GB, leaving about 1.2 GB free.
-- **One voice for both languages.** The Kokoro voice is independent of the language
-  pipeline, so English and Spanish are spoken by the same voice.
+- **Voice: Pocket TTS on the CPU.** More natural than Kokoro, streams its first audio in
+  0.08 s, and uses no VRAM, so the GPU keeps about 1.7 GB of headroom.
+- **One voice for both languages.** Each language has its own model, but both use the
+  same catalog voice, so English and Spanish are spoken by the same person.
 - **Language model: Qwen 3.5 9B as planned.** It is faster than the 35 to 45 tokens/s
   estimate.
 
 Estimated time from end of speech to first word: about 0.25 s turn detection +
-0.17 s recognition + 0.22 s first sentence + 0.09 s first audio = **about 0.75 s**.
+0.17 s recognition + 0.22 s first sentence + 0.08 s first audio = **about 0.75 s**.

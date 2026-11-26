@@ -23,8 +23,8 @@ llm = ["openai>=1.50"]
 # Speech recognition candidates.
 # av 17+ breaks faster-whisper 1.2.1 ("unexpected keyword argument 'metadata_errors'").
 stt = ["onnx-asr[cpu,hub]>=0.12", "faster-whisper>=1.2", "av<17"]
-# Voice.
-tts = ["kokoro>=0.9.4"]
+# Voice: Pocket TTS (natural, streaming, CPU) is the pick; Kokoro is the fast fallback.
+tts = ["pocket-tts[audio]>=4.0", "kokoro>=0.9.4"]
 phase0 = ["spanish-companion[audio,llm,stt,tts]"]
 dev = ["pytest>=8", "ruff>=0.6"]
 

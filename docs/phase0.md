@@ -53,6 +53,7 @@ python scripts/phase0/bench_stt.py        # Parakeet vs Whisper on your voice
 python scripts/phase0/bench_tts.py        # Kokoro, English + Spanish voices, on the CPU
 python scripts/phase0/bench_tts.py --device cuda
 python scripts/phase0/bench_tts.py --device cuda --voice ef_dora   # compare voices
+python scripts/phase0/bench_pocket_tts.py --voice alba            # the more natural voice
 ```
 
 For the language model, download a **text-only** Qwen 3.5 9B GGUF at `Q4_K_M` (search

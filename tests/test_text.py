@@ -9,8 +9,19 @@ def test_mixed():
     out = split_languages("Nice! In Spanish that's <es>muchas gracias</es>. Try it.")
     assert out == [
         Segment("en", "Nice! In Spanish that's"),
-        Segment("es", "muchas gracias"),
-        Segment("en", ". Try it."),
+        Segment("es", "muchas gracias."),
+        Segment("en", "Try it."),
+    ]
+
+
+def test_punctuation_only_part_is_merged():
+    assert split_languages("Say <es>hola</es>!") == [Segment("en", "Say"), Segment("es", "hola!")]
+
+
+def test_spanish_opening_marks_stay():
+    assert split_languages("Ask: <es>¿Dónde está?</es>") == [
+        Segment("en", "Ask:"),
+        Segment("es", "¿Dónde está?"),
     ]
 
 
