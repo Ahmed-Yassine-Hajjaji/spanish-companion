@@ -31,13 +31,13 @@ flowchart LR
     B --> C[Speech recognition<br/>Parakeet v3]
     C --> D[Tutor logic]
     D --> E[Language model<br/>Qwen 3.5 9B on GPU]
-    E --> F[Voice<br/>Kokoro on GPU]
+    E --> F[Voice<br/>Pocket TTS]
     F --> A
     D --> G[(SQLite memory)]
 ```
 
 Everything is designed around one constraint: **an 8 GB GPU**. The language model gets
-the GPU along with the small voice model; speech recognition and turn detection run on the CPU. Details, memory
+the GPU; speech recognition, the voice and turn detection run on the CPU. Details, memory
 budget and latency targets: [docs/architecture.md](docs/architecture.md).
 
 | Job | Tool | Why |
@@ -45,7 +45,7 @@ budget and latency targets: [docs/architecture.md](docs/architecture.md).
 | Pipeline, turn-taking, barge-in | [Pipecat](https://github.com/pipecat-ai/pipecat) | Open-source real-time voice framework |
 | Language model | Qwen 3.5 9B (Q4_K_M) on [llama.cpp](https://github.com/ggml-org/llama.cpp) | Best 8 GB model for multilingual chat and tool use |
 | Speech recognition | [Parakeet TDT 0.6B v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3) via [onnx-asr](https://github.com/istupakov/onnx-asr) | English, Spanish and French; fast on CPU |
-| Voice | [Kokoro 82M](https://huggingface.co/hexgrad/Kokoro-82M) | Fast, natural, Apache 2.0, English and Spanish voices |
+| Voice | [Pocket TTS](https://github.com/kyutai-labs/pocket-tts) | Natural, real streaming, 0.08 s to first audio on CPU, English and Spanish |
 | Turn detection | Silero VAD + [Smart Turn v3](https://github.com/pipecat-ai/smart-turn) | Knows a pause for thought from the end of a sentence |
 | Grammar second opinion | [LanguageTool](https://languagetool.org/) (local server) | Rule-based check on the model's corrections |
 | Memory | SQLite + FSRS | One local file, standard spaced repetition |
@@ -87,4 +87,4 @@ Models, recordings and learning data are git-ignored.
 ## License
 
 [MIT](LICENSE). Model weights keep their own licences (Qwen: Apache 2.0, Parakeet: CC BY 4.0,
-Kokoro: Apache 2.0).
+Pocket TTS: see its model card).

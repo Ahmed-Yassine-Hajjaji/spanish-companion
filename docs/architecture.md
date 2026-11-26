@@ -1,7 +1,7 @@
 # Architecture
 
-The companion is a pipeline of small, swappable parts. The GPU (8 GB) runs the language
-model and the voice; speech recognition and turn detection run on the CPU. The split comes
+The companion is a pipeline of small, swappable parts. The GPU (8 GB) runs only the
+language model; speech recognition, the voice and turn detection run on the CPU. The split comes
 from the [phase 0 measurements](phase0-results.md).
 
 ```mermaid
@@ -11,7 +11,7 @@ flowchart LR
         B --> C[Speech recognition<br/>Parakeet 0.6B v3, CPU]
         C --> D[Tutor logic<br/>Python, Pipecat]
         D --> E[Language model<br/>Qwen 3.5 9B, GPU]
-        E --> F[Voice<br/>Kokoro 82M, GPU]
+        E --> F[Voice<br/>Pocket TTS, CPU]
         F --> A
         B -. barge-in: stop talking .-> F
     end
@@ -27,14 +27,14 @@ flowchart LR
 | Language model, Qwen 3.5 9B Q4_K_M, 8K context | GPU | 6.3 GB VRAM (measured) |
 | Windows desktop, browser | GPU | 0.3 to 0.8 GB VRAM |
 | Speech recognition, Parakeet 0.6B v3 | CPU | about 2 GB RAM |
-| Voice, Kokoro 82M | GPU | 421 MiB VRAM |
+| Voice, Pocket TTS (one model per language) | CPU | no VRAM |
 | Turn detection | CPU | under 100 MB |
 
 ## Latency target
 
 End of the user's sentence to the companion's first word: about 0.75 s, adding up the
 measured stages (turn detection 0.25 s, recognition 0.17 s, first sentence 0.22 s,
-first audio 0.09 s). The voice starts on the first sentence while the model is still
+first audio 0.08 s). The voice starts on the first sentence while the model is still
 writing the rest.
 
 ## Key design rules
