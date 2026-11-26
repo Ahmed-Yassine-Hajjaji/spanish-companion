@@ -55,7 +55,7 @@ uv pip install -e ".[call,dev]"
 | Environment variable | Default | Meaning |
 | --- | --- | --- |
 | `COMPANION_VOICE` | `eve` | Voice at the start of a call (`eve` or `alba`) |
-| `COMPANION_LLM_URL` | `http://localhost:8080/v1` | llama.cpp server address |
+| `COMPANION_LLM_URL` | `http://127.0.0.1:8080/v1` | llama.cpp server address (an IP, because `localhost` can stall on IPv6 on Windows) |
 | `COMPANION_LLM_MAX_TOKENS` | `160` | Longest reply, in tokens |
 | `COMPANION_STT_MODEL` | `nemo-parakeet-tdt-0.6b-v3` | Speech recognition model |
 

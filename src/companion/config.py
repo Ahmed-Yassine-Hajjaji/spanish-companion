@@ -17,7 +17,7 @@ VOICES = ("eve", "alba")
 class Settings:
     # Local llama.cpp server (OpenAI-compatible API).
     llm_url: str = field(
-        default_factory=lambda: os.getenv("COMPANION_LLM_URL", "http://localhost:8080/v1")
+        default_factory=lambda: os.getenv("COMPANION_LLM_URL", "http://127.0.0.1:8080/v1")
     )
     llm_max_tokens: int = field(
         default_factory=lambda: int(os.getenv("COMPANION_LLM_MAX_TOKENS", "160"))
