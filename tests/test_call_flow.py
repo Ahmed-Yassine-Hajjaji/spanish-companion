@@ -18,12 +18,13 @@ from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.responses import StreamingResponse  # noqa: E402
 from pipecat.frames.frames import LLMMessagesAppendFrame, TTSAudioRawFrame  # noqa: E402
 from pipecat.pipeline.pipeline import Pipeline  # noqa: E402
-from pipecat.processors.aggregators.llm_response_universal import (  # noqa: E402
+from pipecat.processors.aggregators.llm_response_universal import (  # noqa: E402  # noqa: E402
     LLMContextAggregatorPair,
+    LLMUserAggregatorParams,
 )
 from pipecat.tests.utils import SleepFrame, run_test  # noqa: E402
 
-from companion.bot import build_llm, new_context  # noqa: E402
+from companion.bot import build_llm, new_context, turn_strategies  # noqa: E402
 from companion.config import Settings  # noqa: E402
 from tests.test_services import make_tts  # noqa: E402
 
@@ -47,9 +48,15 @@ def fake_server(requests_seen):
         body = await request.json()
         requests_seen.append(body)
         has_tool_result = any(m.get("role") == "tool" for m in body["messages"])
+        last_user = [m for m in body["messages"] if m["role"] == "user"][-1]["content"]
 
         def stream():
-            if not has_tool_result:
+            if "presentation" in str(last_user):
+                # Turn-completion marker first, as the turn protocol asks.
+                for token in ["●", " Correct", "."]:
+                    yield chunk({"content": token})
+                yield chunk({}, "stop")
+            elif not has_tool_result:
                 call = {
                     "index": 0,
                     "id": "call_1",
@@ -115,3 +122,34 @@ async def test_voice_switch_by_request(llm_url):
     assert ("es", "alba", "Alba") in log
     assert all(voice == "alba" for _, voice, _ in log)
     assert any(isinstance(f, TTSAudioRawFrame) for f in down)
+
+
+async def test_turn_marker_is_not_spoken(llm_url):
+    url, requests_seen = llm_url
+    log = []
+    llm = build_llm(Settings(llm_url=url))
+    context = new_context()
+    user, assistant = LLMContextAggregatorPair(
+        context, user_params=LLMUserAggregatorParams(user_turn_strategies=turn_strategies())
+    )
+    pipeline = Pipeline([user, llm, make_tts(log), assistant])
+
+    await run_test(
+        pipeline,
+        frames_to_send=[
+            SleepFrame(sleep=0.3),
+            LLMMessagesAppendFrame(
+                messages=[{"role": "user", "content": "My presentation starts now."}],
+                run_llm=True,
+            ),
+            SleepFrame(sleep=1.5),
+        ],
+        start_timeout=5,
+    )
+
+    # The model was told to judge whether the user finished, and the marker it
+    # answered with was not read aloud.
+    assert "TURN COMPLETION" in requests_seen[-1]["messages"][0]["content"]
+    spoken = " ".join(text for _, _, text in log)
+    assert "Correct." in spoken
+    assert "●" not in spoken

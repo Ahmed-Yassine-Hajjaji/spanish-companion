@@ -72,6 +72,9 @@ unless you ask it to.
 - The transcript on the call page shows the `<es>` tags around Spanish words.
 - Each call's conversation is saved to `data\calls\<date>.json` on your PC, but the
   companion does not read it back yet: memory and mistake review come in phases 2 and 3.
+- When you pause mid-sentence, the language model first decides whether you finished.
+  If not, Sol stays quiet and judges the whole sentence once you're done, and after
+  about 6 seconds of silence it nudges you with "Go on."
 - Speech recognition sometimes mishears Spanish from a beginner (for example "diaria"
   as "diarrhea"). Sol is told to guess the likely word from context.
 - Interruption can be triggered by loud background noise; a headset helps.

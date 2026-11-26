@@ -10,7 +10,9 @@ MESSAGES = [
     {"role": "assistant", "tool_calls": [{"id": "1"}], "content": None},
     {"role": "tool", "content": '{"ok": true}'},
     {"role": "user", "content": [{"type": "text", "text": "Yo soy estudiante."}]},
-    {"role": "assistant", "content": "That's right."},
+    {"role": "user", "content": "Por la tarde hace mucho"},
+    {"role": "assistant", "content": "◐"},
+    {"role": "assistant", "content": "● That's right."},
 ]
 
 
@@ -20,6 +22,7 @@ def test_call_turns_keeps_spoken_text_only():
         {"role": "assistant", "text": "Hi! <es>Hola</es>. What shall we do?"},
         {"role": "user", "text": "Correct my presentation phrases."},
         {"role": "user", "text": "Yo soy estudiante."},
+        {"role": "user", "text": "Por la tarde hace mucho"},
         {"role": "assistant", "text": "That's right."},
     ]
 
@@ -30,7 +33,7 @@ def test_save_call_writes_json(tmp_path):
     assert path.name == "2026-11-26_03-00-00.json"
     record = json.loads(path.read_text(encoding="utf-8"))
     assert record["started"] == "2026-11-26T03:00:00"
-    assert len(record["turns"]) == 4
+    assert len(record["turns"]) == 5
 
 
 def test_save_call_skips_calls_without_user_speech(tmp_path):

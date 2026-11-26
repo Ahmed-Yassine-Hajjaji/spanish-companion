@@ -29,11 +29,13 @@ from pipecat.runner.utils import create_transport
 from pipecat.services.llm_service import FunctionCallParams
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
+from pipecat.turns.user_turn_completion import USER_TURN_COMPLETE_MARKER, UserTurnCompletionConfig
+from pipecat.turns.user_turn_strategies import FilterIncompleteUserTurnStrategies
 from pipecat.workers.runner import WorkerRunner
 
 from companion import models, transcripts
 from companion.config import VOICES, Settings
-from companion.prompts import GREETING, PERSONA
+from companion.prompts import GREETING, NUDGE_LONG, NUDGE_SHORT, PERSONA
 from companion.services.stt import ParakeetSTTService
 from companion.services.tts import BilingualPocketTTSService
 
@@ -63,7 +65,8 @@ def build_llm(settings: Settings) -> OpenAILLMService:
         settings=OpenAILLMService.Settings(
             model="local",
             system_instruction=PERSONA,
-            temperature=0.7,
+            # Low temperature: steadier corrections, no arguing with itself mid-reply.
+            temperature=0.3,
             max_tokens=settings.llm_max_tokens,
             # Qwen-style models: no "thinking" in a live call, it adds seconds of delay.
             extra={"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}},
@@ -88,6 +91,24 @@ async def switch_voice(params: FunctionCallParams, voice: str):
     await params.result_callback({"ok": True, "voice": voice})
 
 
+def turn_strategies() -> FilterIncompleteUserTurnStrategies:
+    """Let the language model judge whether the user finished their sentence.
+
+    Smart Turn decides from the sound when the user paused, but a beginner speaking
+    Spanish pauses mid-sentence a lot ("en el centro de la..."). On each pause the
+    model first answers with a marker: complete, or cut off and still talking. Only a
+    complete turn gets a reply, and the pieces of a cut-off sentence are judged together.
+    """
+    return FilterIncompleteUserTurnStrategies(
+        config=UserTurnCompletionConfig(
+            incomplete_short_timeout=6.0,
+            incomplete_long_timeout=15.0,
+            incomplete_short_prompt=NUDGE_SHORT.format(complete=USER_TURN_COMPLETE_MARKER),
+            incomplete_long_prompt=NUDGE_LONG.format(complete=USER_TURN_COMPLETE_MARKER),
+        )
+    )
+
+
 def new_context() -> LLMContext:
     return LLMContext(tools=[switch_voice])
 
@@ -102,7 +123,8 @@ async def run_call(transport: BaseTransport, settings: Settings, handle_sigint: 
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,
         user_params=LLMUserAggregatorParams(
-            vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=settings.pause_secs))
+            vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=settings.pause_secs)),
+            user_turn_strategies=turn_strategies(),
         ),
     )
 
