@@ -13,9 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Turn-completion markers the model starts each reply with (see bot.turn_strategies).
-# The model keeps them in its context, but they are not part of what was said.
-TURN_MARKERS = "●◐○"
+from companion.text import remove_turn_markers
 
 
 def call_turns(messages: Iterable[Mapping[str, Any]], skip: Iterable[str] = ()) -> list[dict]:
@@ -34,7 +32,7 @@ def call_turns(messages: Iterable[Mapping[str, Any]], skip: Iterable[str] = ()) 
             content = " ".join(p.get("text", "") for p in content if isinstance(p, Mapping))
         text = str(content).strip()
         if role == "assistant":
-            text = text.lstrip(TURN_MARKERS).strip()
+            text = remove_turn_markers(text)
         if text and text not in skipped:
             turns.append({"role": role, "text": text})
     return turns

@@ -42,3 +42,11 @@ def test_adjacent_same_language_merged():
 
 def test_strip_tags():
     assert strip_tags("Say <es>hola</es>!") == "Say hola !"
+
+
+def test_remove_turn_markers_handles_repeats():
+    from companion.text import remove_turn_markers
+
+    assert remove_turn_markers("● ● Correct.") == "Correct."
+    assert remove_turn_markers("◐") == ""
+    assert remove_turn_markers("●Almost: <es>Hola</es>.") == "Almost: <es>Hola</es>."

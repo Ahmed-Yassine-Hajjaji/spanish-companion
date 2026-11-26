@@ -61,3 +61,15 @@ def split_languages(text: str, default: str = "en") -> list[Segment]:
 def strip_tags(text: str) -> str:
     """Remove the language tags, for subtitles and logs."""
     return " ".join(_TAG.sub(" ", text).split())
+
+
+# Turn-completion markers the language model starts its replies with (see
+# companion.bot.turn_strategies). The model sometimes repeats one ("● ● Correct."),
+# so remove them anywhere before speaking or saving a reply.
+TURN_MARKERS = "●◐○"
+_MARKERS = re.compile(f"[{TURN_MARKERS}]")
+
+
+def remove_turn_markers(text: str) -> str:
+    """Drop turn-completion markers and the spaces they leave behind."""
+    return " ".join(_MARKERS.sub(" ", text).split())

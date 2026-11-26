@@ -20,7 +20,7 @@ class Settings:
         default_factory=lambda: os.getenv("COMPANION_LLM_URL", "http://127.0.0.1:8080/v1")
     )
     llm_max_tokens: int = field(
-        default_factory=lambda: int(os.getenv("COMPANION_LLM_MAX_TOKENS", "160"))
+        default_factory=lambda: int(os.getenv("COMPANION_LLM_MAX_TOKENS", "100"))
     )
     # Voice used when a call starts.
     voice: str = field(default_factory=lambda: os.getenv("COMPANION_VOICE", "eve"))

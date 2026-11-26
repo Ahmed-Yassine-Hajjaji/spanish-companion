@@ -69,7 +69,13 @@ def build_llm(settings: Settings) -> OpenAILLMService:
             temperature=0.3,
             max_tokens=settings.llm_max_tokens,
             # Qwen-style models: no "thinking" in a live call, it adds seconds of delay.
-            extra={"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}},
+            extra={
+                "extra_body": {
+                    "chat_template_kwargs": {"enable_thinking": False},
+                    # llama.cpp: discourage the loops a small model can fall into.
+                    "repeat_penalty": 1.1,
+                }
+            },
         ),
     )
 

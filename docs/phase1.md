@@ -62,7 +62,7 @@ unless you ask it to.
 | --- | --- | --- |
 | `COMPANION_VOICE` | `eve` | Voice at the start of a call (`eve` or `alba`) |
 | `COMPANION_LLM_URL` | `http://127.0.0.1:8080/v1` | llama.cpp server address (an IP, because `localhost` can stall on IPv6 on Windows) |
-| `COMPANION_LLM_MAX_TOKENS` | `160` | Longest reply, in tokens |
+| `COMPANION_LLM_MAX_TOKENS` | `100` | Longest reply, in tokens |
 | `COMPANION_PAUSE_SECS` | `0.8` | Silence before a pause may end your turn. Raise it (for example `1.2`) if Sol jumps in while you think |
 | `COMPANION_CALLS_DIR` | `data\calls` | Where each call's conversation is saved |
 | `COMPANION_STT_MODEL` | `nemo-parakeet-tdt-0.6b-v3` | Speech recognition model |

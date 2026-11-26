@@ -119,6 +119,7 @@ async def test_voice_switch_by_request(llm_url):
     assert "Sol" in requests_seen[0]["messages"][0]["content"]
     assert requests_seen[0]["tools"][0]["function"]["name"] == "switch_voice"
     assert requests_seen[0]["chat_template_kwargs"] == {"enable_thinking": False}
+    assert requests_seen[0]["repeat_penalty"] == 1.1
     assert ("es", "alba", "Alba") in log
     assert all(voice == "alba" for _, voice, _ in log)
     assert any(isinstance(f, TTSAudioRawFrame) for f in down)

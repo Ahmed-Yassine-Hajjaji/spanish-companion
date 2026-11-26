@@ -21,6 +21,7 @@ from pipecat.services.tts_service import TTSService
 from pipecat.utils.text.skip_tags_aggregator import SkipTagsAggregator
 
 from companion.speech import VoiceStates, iter_bilingual_audio
+from companion.text import remove_turn_markers
 
 ES_TAGS = ("<es>", "</es>")
 
@@ -71,6 +72,9 @@ class BilingualPocketTTSService(TTSService):
 
     async def run_tts(self, text: str, context_id: str) -> AsyncGenerator[Frame, None]:
         voice = str(self._settings.voice)
+        text = remove_turn_markers(text)
+        if not text:
+            return
         chunks = iter_bilingual_audio(
             self._models, lambda lang: self._states.get(lang, voice), text
         )
