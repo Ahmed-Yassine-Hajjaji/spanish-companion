@@ -26,7 +26,13 @@ stt = ["onnx-asr[cpu,hub]>=0.12", "faster-whisper>=1.2", "av<17"]
 # Voice: Pocket TTS (natural, streaming, CPU) is the pick; Kokoro is the fast fallback.
 tts = ["pocket-tts[audio]>=4.0", "kokoro>=0.9.4"]
 phase0 = ["spanish-companion[audio,llm,stt,tts]"]
-dev = ["pytest>=8", "ruff>=0.6"]
+# Phase 1: the live call (Pipecat with its local browser call page).
+call = [
+    "pipecat-ai[runner,webrtc,openai]==1.17.0",
+    "onnx-asr[cpu,hub]>=0.12",
+    "pocket-tts[audio]>=4.0",
+]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/companion"]
@@ -38,5 +44,10 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[project.scripts]
+companion = "companion.bot:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

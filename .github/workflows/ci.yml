@@ -14,7 +14,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install -e ".[dev]"
+        # The call pipeline is tested with fake models, so the heavy model
+        # packages (pocket-tts, onnx-asr) are left out here.
+        run: pip install -e ".[dev]" "pipecat-ai[runner,webrtc,openai]==1.17.0"
       - name: Lint
         run: ruff check . && ruff format --check .
       - name: Test

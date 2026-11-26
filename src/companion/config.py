@@ -1,0 +1,44 @@
+"""Settings for a call, read from environment variables with sensible defaults.
+
+Every setting can be changed without touching code, for example in PowerShell:
+    $env:COMPANION_VOICE = "alba"
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, field
+
+# Voices the companion may switch between during a call (Pocket TTS catalog names).
+VOICES = ("eve", "alba")
+
+
+@dataclass(frozen=True)
+class Settings:
+    # Local llama.cpp server (OpenAI-compatible API).
+    llm_url: str = field(
+        default_factory=lambda: os.getenv("COMPANION_LLM_URL", "http://127.0.0.1:8080/v1")
+    )
+    llm_max_tokens: int = field(
+        default_factory=lambda: int(os.getenv("COMPANION_LLM_MAX_TOKENS", "100"))
+    )
+    # Voice used when a call starts.
+    voice: str = field(default_factory=lambda: os.getenv("COMPANION_VOICE", "eve"))
+    # Seconds of silence before a pause counts as "maybe done talking". Longer gives
+    # you time to think mid-sentence; shorter makes replies come sooner.
+    pause_secs: float = field(
+        default_factory=lambda: float(os.getenv("COMPANION_PAUSE_SECS", "0.8"))
+    )
+    # Speech recognition model (onnx-asr name).
+    stt_model: str = field(
+        default_factory=lambda: os.getenv("COMPANION_STT_MODEL", "nemo-parakeet-tdt-0.6b-v3")
+    )
+
+    # Where call transcripts are saved (one JSON file per call), for review later.
+    calls_dir: str = field(
+        default_factory=lambda: os.getenv("COMPANION_CALLS_DIR", os.path.join("data", "calls"))
+    )
+
+    def __post_init__(self) -> None:
+        if self.voice not in VOICES:
+            raise ValueError(f"COMPANION_VOICE must be one of {VOICES}, got {self.voice!r}")

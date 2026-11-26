@@ -14,6 +14,10 @@ _TAG = re.compile(r"<\s*(/?)\s*es\s*>", re.IGNORECASE)
 # Closing punctuation at the start of a part belongs to the part before it
 # ("<es>gracias</es>." -> "gracias."). Opening marks like ¿ and ¡ stay where they are.
 _LEADING_PUNCT = re.compile(r"^[.,;:!?…)\]\"'»]+")
+# The model sometimes forgets the tags around a Spanish question or exclamation, such
+# as "¡Hola!" or "¿Cómo estás?". Only Spanish opens a sentence with ¿ or ¡, so a span
+# from ¿/¡ to its closing ?/! in untagged text is treated as Spanish.
+_UNTAGGED_SPANISH = re.compile(r"[¿¡][^¿¡?!]*[?!]")
 
 
 @dataclass(frozen=True)
@@ -49,15 +53,38 @@ def split_languages(text: str, default: str = "en") -> list[Segment]:
         else:
             segments.append(Segment(chunk_lang, chunk))
 
+    def emit_part(chunk: str, chunk_lang: str) -> None:
+        if chunk_lang == "es" or default == "es":
+            emit(chunk, chunk_lang)
+            return
+        start = 0
+        for spanish in _UNTAGGED_SPANISH.finditer(chunk):
+            emit(chunk[start : spanish.start()], chunk_lang)
+            emit(spanish.group(), "es")
+            start = spanish.end()
+        emit(chunk[start:], chunk_lang)
+
     for match in _TAG.finditer(text):
-        emit(text[pos : match.start()], lang)
+        emit_part(text[pos : match.start()], lang)
         closing = match.group(1) == "/"
         lang = default if closing else "es"
         pos = match.end()
-    emit(text[pos:], lang)
+    emit_part(text[pos:], lang)
     return segments
 
 
 def strip_tags(text: str) -> str:
     """Remove the language tags, for subtitles and logs."""
     return " ".join(_TAG.sub(" ", text).split())
+
+
+# Turn-completion markers the language model starts its replies with (see
+# companion.bot.turn_strategies). The model sometimes repeats one ("● ● Correct."),
+# so remove them anywhere before speaking or saving a reply.
+TURN_MARKERS = "●◐○"
+_MARKERS = re.compile(f"[{TURN_MARKERS}]")
+
+
+def remove_turn_markers(text: str) -> str:
+    """Drop turn-completion markers and the spaces they leave behind."""
+    return " ".join(_MARKERS.sub(" ", text).split())

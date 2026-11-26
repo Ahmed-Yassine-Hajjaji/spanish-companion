@@ -8,7 +8,7 @@ companion chats in English, slowly brings Spanish in at your level, corrects you
 (one thing at a time), remembers your mistakes and words between calls, and brings them
 back with spaced repetition.
 
-> Status: **Phase 0 done** ([results](docs/phase0-results.md)): about 0.75 s from end of speech to first word on an RTX 4060. Next: phase 1. See the [roadmap](#roadmap).
+> Status: **Phase 1 in progress**: the live call loop is built ([how to run it](docs/phase1.md)). Phase 0 measured about 0.75 s from end of speech to first word on an RTX 4060 ([results](docs/phase0-results.md)).
 
 ## What it will do
 
@@ -62,18 +62,20 @@ budget and latency targets: [docs/architecture.md](docs/architecture.md).
 
 ## Getting started
 
-Phase 0 is runnable today: see [docs/phase0.md](docs/phase0.md) for setup on Windows 11
-with an NVIDIA GPU.
+Set up the models with [docs/phase0.md](docs/phase0.md) (Windows, NVIDIA GPU), then start a
+call with [docs/phase1.md](docs/phase1.md).
 
 ```bash
-uv venv --python 3.12 && uv pip install -e ".[phase0,dev]"
+uv venv --python 3.12 && uv pip install -e ".[phase0,call,dev]"
 pytest
+python -m companion.bot   # then open http://localhost:7860
 ```
 
 ## Project layout
 
 ```
-src/companion/      core package (language tagging, metrics, prompts)
+src/companion/      the companion: call pipeline (bot.py), local speech services, prompts
+src/companion/services/   Parakeet speech recognition and bilingual Pocket TTS for Pipecat
 scripts/phase0/     hardware checks and benchmarks
 docs/               architecture and setup guides
 tests/              unit tests (run in CI)
