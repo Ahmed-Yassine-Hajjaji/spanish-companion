@@ -8,11 +8,11 @@ companion chats in English, slowly brings Spanish in at your level, corrects you
 (one thing at a time), remembers your mistakes and words between calls, and brings them
 back with spaced repetition.
 
-> Status: **Phase 0**, measuring each part on the target hardware. See the [roadmap](#roadmap).
+> Status: **Phase 0 done** ([results](docs/phase0-results.md)): about 0.75 s from end of speech to first word on an RTX 4060. Next: phase 1. See the [roadmap](#roadmap).
 
 ## What it will do
 
-- **Live calls.** Speak naturally. It answers in about a second, and you can interrupt it.
+- **Live calls.** Speak naturally. It answers in under a second, and you can interrupt it.
 - **A friend, not a strict teacher.** Mostly English at first, with Spanish words, short
   phrases and small challenges ("How would you say that in Spanish?").
 - **Gentle corrections.** One correction per turn, explained in a few words, then try again.
@@ -31,13 +31,13 @@ flowchart LR
     B --> C[Speech recognition<br/>Parakeet v3]
     C --> D[Tutor logic]
     D --> E[Language model<br/>Qwen 3.5 9B on GPU]
-    E --> F[Voice<br/>Kokoro]
+    E --> F[Voice<br/>Kokoro on GPU]
     F --> A
     D --> G[(SQLite memory)]
 ```
 
 Everything is designed around one constraint: **an 8 GB GPU**. The language model gets
-the GPU; speech recognition, the voice and turn detection run on the CPU. Details, memory
+the GPU along with the small voice model; speech recognition and turn detection run on the CPU. Details, memory
 budget and latency targets: [docs/architecture.md](docs/architecture.md).
 
 | Job | Tool | Why |
@@ -52,7 +52,7 @@ budget and latency targets: [docs/architecture.md](docs/architecture.md).
 
 ## Roadmap
 
-- [ ] **Phase 0: measure the parts.** Benchmark the model, recognizers and voice on an RTX 4060 ([guide](docs/phase0.md))
+- [x] **Phase 0: measure the parts.** Benchmark the model, recognizers and voice on an RTX 4060 ([guide](docs/phase0.md))
 - [ ] **Phase 1: first call.** Live voice loop in the browser with interruption and subtitles
 - [ ] **Phase 2: tutor brain.** Checked corrections, two-language voice, beginner-friendly patience
 - [ ] **Phase 3: memory.** Session log, summaries, FSRS review, level adaptation

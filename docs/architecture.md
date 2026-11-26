@@ -1,7 +1,8 @@
 # Architecture
 
-The companion is a pipeline of small, swappable parts. The GPU (8 GB) runs only the
-language model; everything else runs on the CPU, because the model alone takes about 6 GB.
+The companion is a pipeline of small, swappable parts. The GPU (8 GB) runs the language
+model and the voice; speech recognition and turn detection run on the CPU. The split comes
+from the [phase 0 measurements](phase0-results.md).
 
 ```mermaid
 flowchart LR
@@ -10,7 +11,7 @@ flowchart LR
         B --> C[Speech recognition<br/>Parakeet 0.6B v3, CPU]
         C --> D[Tutor logic<br/>Python, Pipecat]
         D --> E[Language model<br/>Qwen 3.5 9B, GPU]
-        E --> F[Voice<br/>Kokoro 82M, CPU]
+        E --> F[Voice<br/>Kokoro 82M, GPU]
         F --> A
         B -. barge-in: stop talking .-> F
     end
@@ -23,16 +24,17 @@ flowchart LR
 
 | Part | Runs on | Memory |
 | --- | --- | --- |
-| Language model, Qwen 3.5 9B Q4_K_M, 8K context | GPU | about 6.2 GB VRAM |
+| Language model, Qwen 3.5 9B Q4_K_M, 8K context | GPU | 6.3 GB VRAM (measured) |
 | Windows desktop, browser | GPU | 0.3 to 0.8 GB VRAM |
 | Speech recognition, Parakeet 0.6B v3 | CPU | about 2 GB RAM |
-| Voice, Kokoro 82M | CPU | under 1 GB RAM |
+| Voice, Kokoro 82M | GPU | 421 MiB VRAM |
 | Turn detection | CPU | under 100 MB |
 
 ## Latency target
 
-End of the user's sentence to the companion's first word: about 1.0 to 1.7 s at first,
-under 1.2 s after tuning. The voice starts on the first sentence while the model is still
+End of the user's sentence to the companion's first word: about 0.75 s, adding up the
+measured stages (turn detection 0.25 s, recognition 0.17 s, first sentence 0.22 s,
+first audio 0.09 s). The voice starts on the first sentence while the model is still
 writing the rest.
 
 ## Key design rules
@@ -43,5 +45,5 @@ writing the rest.
   LanguageTool second opinion; if they disagree, no correction is given.
 - **Never blame the learner for the recognizer.** Low recognition confidence means
   "say that again", not a correction.
-- **Spanish is tagged.** The model wraps Spanish in `<es>...</es>` so each part is spoken
-  by a voice for its own language (`companion/text.py`).
+- **Spanish is tagged.** The model wraps Spanish in `<es>...</es>` so each part goes
+  through the right pronunciation pipeline (`companion/text.py`), always in the same voice.

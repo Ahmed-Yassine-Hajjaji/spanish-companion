@@ -21,7 +21,8 @@ audio = ["sounddevice>=0.5"]
 # Language model benchmark (talks to a local llama.cpp server).
 llm = ["openai>=1.50"]
 # Speech recognition candidates.
-stt = ["onnx-asr[cpu,hub]>=0.12", "faster-whisper>=1.2"]
+# av 17+ breaks faster-whisper 1.2.1 ("unexpected keyword argument 'metadata_errors'").
+stt = ["onnx-asr[cpu,hub]>=0.12", "faster-whisper>=1.2", "av<17"]
 # Voice.
 tts = ["kokoro>=0.9.4"]
 phase0 = ["spanish-companion[audio,llm,stt,tts]"]
